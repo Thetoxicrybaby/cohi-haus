@@ -237,7 +237,7 @@
             <a href="#gallery">Дотроос нь</a>
             <a href="#visit">Хаяг</a>
         </nav>
-        <div class="nav-tag">📍 Циркийн баруун талд</div>
+        <div class="nav-tag">📍 СБД, 2-р хороо</div>
     </header>
 
     <div class="scroller">
@@ -374,7 +374,7 @@
                     <div>
                         <h4>Байршил & Цаг</h4>
                         <ul>
-                            <li><address>📍 Циркийн баруун талд, Улаанбаатар</address></li>
+                            <li><address>📍 220к, 31-р байр, СБД, 2-р хороо, Улаанбаатар 14251</address></li>
                             <li style="color: var(--amber);">Soft Opening: 10-р сарын 25–26, 12:00–17:00</li>
                         </ul>
                     </div>
@@ -382,7 +382,7 @@
                         <h4>Холбоо Барих</h4>
                         <ul>
                             <li><a href="#">Instagram — @cohihaus</a></li>
-                            <li style="color: var(--ink-dim); font-size: 0.85rem;">Утас / и-мэйл — захиалагчаас баталгаажуулна уу</li>
+                            <li><a href="tel:+97694118032">+976 9411 8032</a></li>
                         </ul>
                     </div>
                 </div>
@@ -419,17 +419,16 @@
         scene.add(apparatus);
 
         const amberGlass = new THREE.MeshPhysicalMaterial({
-            color: 0xff6a00, transparent: true, opacity: 0.58,
-            roughness: 0.08, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08,
-            ior: 1.45, transmission: 0.35, thickness: 0.3,
+            color: 0xfff3df, transparent: true, opacity: 0.28,
+            roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04,
+            ior: 1.5, transmission: 0.7, thickness: 0.25,
             side: THREE.DoubleSide
         });
-        const rimGlowMat = new THREE.MeshBasicMaterial({ color: 0xffb070, transparent: true, opacity: 0.16, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false });
         const matteBlackMetal = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.55, metalness: 0.4 });
         const richWoodMat = new THREE.MeshStandardMaterial({ color: 0x5c3116, roughness: 0.7, metalness: 0 });
-        const premiumFilterMat = new THREE.MeshStandardMaterial({ color: 0xfffae8, roughness: 0.9, metalness: 0 });
+        const premiumFilterMat = new THREE.MeshStandardMaterial({ color: 0xf3e3c0, roughness: 0.95, metalness: 0 });
+        const coffeeGroundsMat = new THREE.MeshStandardMaterial({ color: 0x3b2412, roughness: 1 });
         const steamParticleMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08 });
-        const glowDropMat = new THREE.MeshBasicMaterial({ color: 0xffc77a, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false });
 
         class HelixCurve extends THREE.Curve {
             constructor(radius = 0.52, turns = 4.5, height = 1.4) { super(); this.radius = radius; this.turns = turns; this.height = height; }
@@ -440,28 +439,71 @@
         }
         const spiralCurve = new HelixCurve();
         const spiralGeo = new THREE.TubeGeometry(spiralCurve, 160, 0.045, 32, false);
-        const spiralGlowGeo = new THREE.TubeGeometry(spiralCurve, 160, 0.054, 32, false);
-        apparatus.add(new THREE.Mesh(spiralGeo, amberGlass));
-        apparatus.add(new THREE.Mesh(spiralGlowGeo, rimGlowMat));
+        const spiralMesh = new THREE.Mesh(spiralGeo, amberGlass);
+        apparatus.add(spiralMesh);
 
-        const funnelGeo = new THREE.ConeGeometry(0.62, 0.6, 24, 1, true);
-        funnelGeo.rotateX(Math.PI);
+        function makeLiquidTexture() {
+            const c = document.createElement('canvas'); c.width = 256; c.height = 32;
+            const ctx = c.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 256, 0);
+            grad.addColorStop(0, '#3a1d08'); grad.addColorStop(0.5, '#6b3814'); grad.addColorStop(1, '#3a1d08');
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, 256, 32);
+            ctx.globalAlpha = 0.5;
+            for (let i = 0; i < 40; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? '#7a4a1e' : '#2b1404';
+                const w = 4 + Math.random() * 14;
+                ctx.fillRect(Math.random() * 256, 0, w, 32);
+            }
+            const tex = new THREE.CanvasTexture(c);
+            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(6, 1);
+            return tex;
+        }
+        const liquidTexture = makeLiquidTexture();
+        const liquidMat = new THREE.MeshStandardMaterial({
+            color: 0x6b3814, map: liquidTexture, roughness: 0.25, metalness: 0,
+            emissive: 0x3a1d08, emissiveIntensity: 0.5
+        });
+        apparatus.add(new THREE.Mesh(new THREE.TubeGeometry(spiralCurve, 160, 0.022, 16, false), liquidMat));
+
+        const NECK_TOP = 0.42, NECK_BOTTOM = 0.26;
+        const NECK_RADIUS = 0.045;
+
+        const funnelGeo = new THREE.CylinderGeometry(0.62, NECK_RADIUS, 0.6, 32, 1, true);
         const funnel = new THREE.Mesh(funnelGeo, amberGlass);
-        funnel.position.y = 0.72;
+        funnel.position.y = NECK_TOP + 0.3;
         apparatus.add(funnel);
 
-        const paperFilter = new THREE.Mesh(new THREE.ConeGeometry(0.59, 0.56, 24, 1, false), premiumFilterMat);
-        paperFilter.position.y = 0.75; paperFilter.rotateX(Math.PI); apparatus.add(paperFilter);
+        const paperFilter = new THREE.Mesh(new THREE.CylinderGeometry(0.585, NECK_RADIUS * 0.9, 0.56, 32, 1, true), premiumFilterMat);
+        paperFilter.position.y = NECK_TOP + 0.3 - 0.02;
+        apparatus.add(paperFilter);
+
+        const groundsTop = NECK_TOP + 0.3 - 0.02 + 0.56 / 2;
+        const coffeeGrounds = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.5, 0.05, 32), coffeeGroundsMat);
+        coffeeGrounds.position.y = groundsTop - 0.06;
+        apparatus.add(coffeeGrounds);
+        const neckGeo = new THREE.CylinderGeometry(0.045, 0.045, NECK_TOP - NECK_BOTTOM, 24, 1, true);
+        const neckMesh = new THREE.Mesh(neckGeo, amberGlass);
+        neckMesh.position.y = (NECK_TOP + NECK_BOTTOM) / 2;
+        apparatus.add(neckMesh);
+        const neckCurve = new THREE.LineCurve3(new THREE.Vector3(0, NECK_TOP, 0), new THREE.Vector3(0, NECK_BOTTOM, 0));
+        const neckLiquidGeo = new THREE.CylinderGeometry(0.022, 0.022, NECK_TOP - NECK_BOTTOM, 16, 1, true);
+        const neckLiquidMesh = new THREE.Mesh(neckLiquidGeo, liquidMat);
+        neckLiquidMesh.position.y = (NECK_TOP + NECK_BOTTOM) / 2;
+        apparatus.add(neckLiquidMesh);
 
         const connPoints = [
-            new THREE.Vector3(0, 0.42, 0), new THREE.Vector3(0, 0.2, 0),
-            new THREE.Vector3(0.05, 0.05, 0), new THREE.Vector3(0.25, -0.12, 0), new THREE.Vector3(0.52, -0.22, 0)
+            new THREE.Vector3(0, NECK_BOTTOM, 0),
+            new THREE.Vector3(0.03, 0.14, -0.03),
+            new THREE.Vector3(0.14, 0.00, -0.10),
+            new THREE.Vector3(0.34, -0.13, -0.10),
+            new THREE.Vector3(0.50, -0.21, -0.05),
+            new THREE.Vector3(0.52, -0.22, 0)
         ];
         const connectorCurve = new THREE.CatmullRomCurve3(connPoints);
-        const connectorGeo = new THREE.TubeGeometry(connectorCurve, 32, 0.045, 32, false);
-        const connectorGlowGeo = new THREE.TubeGeometry(connectorCurve, 32, 0.054, 32, false);
+        const connectorGeo = new THREE.TubeGeometry(connectorCurve, 48, 0.045, 32, false);
         apparatus.add(new THREE.Mesh(connectorGeo, amberGlass));
-        apparatus.add(new THREE.Mesh(connectorGlowGeo, rimGlowMat));
+        apparatus.add(new THREE.Mesh(new THREE.TubeGeometry(connectorCurve, 48, 0.022, 16, false), liquidMat));
 
         const standGroup = new THREE.Group();
         for (let i = 0; i < 3; i++) {
@@ -512,12 +554,6 @@
             steamParticles.push({ mesh: particle, vSpeed: 0.003 + Math.random() * 0.005, initialY: 0.7 });
         }
 
-        const dropCount = 6; const droplets = [];
-        for (let i = 0; i < dropCount; i++) {
-            const drop = new THREE.Mesh(new THREE.SphereGeometry(0.026, 10, 10), glowDropMat.clone());
-            apparatus.add(drop); droplets.push({ mesh: drop, progress: (i / dropCount) });
-        }
-
         scene.add(new THREE.AmbientLight(0xfff1e0, 0.35));
         const keyLight = new THREE.DirectionalLight(0xffb070, 1.4); keyLight.position.set(2.2, 2.5, 2.2); scene.add(keyLight);
         const rimLight = new THREE.PointLight(0x6fa8ff, 1.1, 8); rimLight.position.set(-1.8, 0.5, -1.5); scene.add(rimLight);
@@ -550,14 +586,8 @@
             requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
             kettleGroup.position.y = 1.15 + Math.sin(elapsedTime * 1.8) * 0.01;
+            liquidTexture.offset.x = (elapsedTime * 0.4) % 1;
 
-            droplets.forEach(drop => {
-                drop.progress += baseSpeed;
-                if (drop.progress > 1) drop.progress = 0;
-                if (drop.progress < 0.22) { drop.mesh.position.copy(connectorCurve.getPoint(drop.progress / 0.22)); }
-                else { drop.mesh.position.copy(spiralCurve.getPoint((drop.progress - 0.22) / 0.78)); }
-                drop.mesh.material.opacity = 0.35 + Math.sin(drop.progress * Math.PI) * 0.4;
-            });
 
             steamParticles.forEach(p => {
                 p.mesh.position.y += p.vSpeed;
@@ -572,6 +602,8 @@
             });
 
             baseSpeed += (0.0012 - baseSpeed) * 0.03;
+            amberGlass.opacity = 0.58 + Math.sin(elapsedTime * 1.1) * 0.05;
+            amberGlass.clearcoatRoughness = 0.08 + Math.sin(elapsedTime * 0.6) * 0.02;
             apparatus.position.y = Math.sin(elapsedTime * 0.7) * 0.01;
             apparatus.rotation.y += (targetX * 0.08 - apparatus.rotation.y) * 0.02;
             apparatus.rotation.x += (targetY * 0.05 - apparatus.rotation.x) * 0.02;
